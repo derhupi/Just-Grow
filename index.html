@@ -6,7 +6,7 @@
 <title>Just Grow</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&family=VT323&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Silkscreen&text=0123456789&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -28,6 +28,8 @@
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:"Silkscreen","Pixelify Sans",ui-monospace,"Courier New",monospace;font-size:17px;line-height:1.35;font-variant-numeric:tabular-nums}
 h1{font-family:"Pixelify Sans",ui-monospace,monospace}
+body.f-vt{font-family:"VT323",ui-monospace,"Courier New",monospace;font-size-adjust:0.5}
+body.f-sys{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 .app{max-width:520px;margin:0 auto;padding:14px 14px 28px}
 header{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}
 h1{font-size:34px;font-weight:700;margin:0;letter-spacing:.5px;color:var(--grow);text-shadow:3px 3px 0 var(--line)}
@@ -162,7 +164,7 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
   </div>
   <section id="ghView" hidden><div class="ghwrap"><canvas id="ghCanvas" width="188" height="120" aria-label="Dein Gewächshaus"></canvas></div><p class="note">Wisch zur Seite, um durchs Gewächshaus zu laufen. Tipp eine Pflanze an, um sie auszuwählen.</p><div id="ghDetail"></div></section>
   <div class="toast" id="toast" aria-live="polite">Tipp deine Pflanze an. Und alles, was sich sonst so bewegt: Katze, Sonnenfunken, Düngestäbchen, Regenwürmer, Sternschnuppen.</div>
-<div class="bubble" id="bubble" hidden><p id="bubbleText"></p><div class="bbtn"><button id="btnDrank">Hab getrunken!</button><button id="btnSnooze">Gleich</button></div></div>
+<div class="bubble" id="bubble" hidden><p id="bubbleText"></p><div class="bbtn"><button id="btnDrank">Hab getrunken!</button><button id="btnSnooze">Gleich</button><button id="btnDrinkOff">Ausschalten</button></div></div>
 
   <section class="panel" aria-label="Zustand">
     <div class="who"><b id="stageName"></b><small id="genLbl"></small></div>
@@ -188,7 +190,7 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
     <button role="tab" aria-selected="false" data-tab="inv">Inventar</button>
     <button role="tab" aria-selected="false" data-tab="deco">Deko</button>
     <button role="tab" aria-selected="false" data-tab="log">Tagebuch</button>
-    <button role="tab" aria-selected="false" data-tab="ach">Erfolge</button>
+    <button role="tab" aria-selected="false" data-tab="ach">Mehr</button>
   </div>
   <section class="panel tabpanel" id="tab-up" role="tabpanel"></section>
   <section class="panel tabpanel" id="tab-green" role="tabpanel" hidden>
@@ -200,13 +202,18 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
   <section class="panel tabpanel" id="tab-inv" role="tabpanel" hidden></section>
   <section class="panel tabpanel" id="tab-deco" role="tabpanel" hidden></section>
   <section class="panel tabpanel" id="tab-log" role="tabpanel" hidden><ul class="log" id="log"></ul></section>
-  <section class="panel tabpanel" id="tab-ach" role="tabpanel" hidden><div id="achList"></div>
+  <section class="panel tabpanel" id="tab-ach" role="tabpanel" hidden>
+    <h3 class="sub">Einstellungen</h3>
+    <h3 class="sub">Schrift</h3>
+    <div class="drinkset"><label for="fontSel">Schriftart</label><select id="fontSel"><option value="vt">Klar (Retro)</option><option value="pixel">Pixel (Original)</option><option value="sys">Normal</option></select></div>
+    <p class="note">Falls dir einzelne Buchstaben schwer lesbar vorkommen, probier eine andere Schrift aus.</p>
     <h3 class="sub">Meldungen</h3>
     <div class="drinkset"><label><input type="checkbox" id="tickerOn" checked> Meldungen unter dem Bild anzeigen</label></div>
     <p class="note">Alles steht trotzdem immer im Tagebuch.</p>
     <h3 class="sub">Trink-Erinnerung</h3>
     <div class="drinkset"><label for="drinkEvery">Deine Pflanze erinnert dich</label><select id="drinkEvery"><option value="0">aus</option><option value="20">alle 20 Min.</option><option value="30">alle 30 Min.</option><option value="45">alle 45 Min.</option><option value="60">jede Stunde</option></select></div>
     <p class="note" id="drinkToday"></p>
+    <h3 class="sub">Erfolge</h3><div id="achList"></div>
     <h3 class="sub">Für Tester: Himmel ausprobieren</h3>
     <p class="note">Startet ein Hintergrund-Ereignis sofort, damit du nicht auf den Sommer oder Silvester warten musst.</p>
     <div class="testsky"><button data-bg="balloon">Heißluftballon</button><button data-bg="birds">Vogelschwarm</button><button data-bg="kite">Drachen</button><button data-bg="plane">Flugzeug</button><button data-bg="star">Sternschnuppe</button><button data-bg="sleigh">Schlitten</button><button data-bg="bats">Fledermäuse</button><button data-bg="hearts">Herzchen</button><button data-bg="fireworks">Feuerwerk</button></div>
@@ -513,8 +520,10 @@ function buy(sp){
 }
 function sellVal(p){return Math.round(PRICE[p.sp]*1.2*(p.v==='gold'?10:p.v!=='base'?2:1)*(1+p.stage*0.2));}
 function sell(id){const p=S.plants.find(q=>q.id===id);if(!p||id===S.active)return;const val=sellVal(p);
-  if(!confirm(`${p.name||SPECIES[p.sp].n} für ${fmt(val)} Zucker an die Gärtnerei abgeben?`))return;
-  S.plants=S.plants.filter(q=>q.id!==id);S.zucker+=val;log(`${pname(p)} ist in die Gärtnerei umgezogen. +${fmt(val)} Zucker.`);ghSel=null;renderGreen();updateUI();}
+  ask(`${pname(p)} für ${fmt(val)} Zucker an die Gärtnerei abgeben?`,'Abgeben',()=>{
+  S.plants=S.plants.filter(q=>q.id!==id);S.zucker+=val;log(`${pname(p)} ist in die Gärtnerei umgezogen. +${fmt(val)} Zucker.`);ghSel=null;renderGreen();updateUI();});}
+function ask(msg,ok,fn){showOverlay(`<h2>Bist du sicher?</h2><p>${msg}</p><div class="species"><button id="askOk">${ok}</button><button id="askNo">Abbrechen</button></div>`);
+  $('askOk').onclick=()=>{hideOverlay();fn();};$('askNo').onclick=hideOverlay;}
 function expandGh(){const c=ghExpandCost();if(S.zucker<c)return;S.zucker-=c;S.ghCap+=2;S.ghExp=(S.ghExp||0)+1;log('Der Gärtner zimmert zwei neue Plätze ins Gewächshaus.');renderGreen();updateUI();}
 function harvest(id){
   const p=id===S.active?null:S.plants.find(q=>q.id===id),sp=p?p.sp:S.species;
@@ -544,8 +553,11 @@ document.getElementById('btnRustle').onclick=()=>{
 };
 document.getElementById('btnSeed').onclick=()=>{if(S.stage>=5)harvest(S.active);};
 document.getElementById('btnReset').onclick=()=>{
-  if(!confirm('Spielstand wirklich löschen? Hilde wird dich vergessen.'))return;
-  S=fresh(); try{localStorage.removeItem(KEY);}catch(e){} renderLog(); renderUps(); renderAch(); renderGreen(); pickStarter();
+  ask('Dein kompletter Spielstand wird gelöscht: alle Pflanzen, Zucker, Stärken, Erfolge und das Tagebuch. Hilde wird dich vergessen. Das kann nicht rückgängig gemacht werden.','Ja, alles löschen',()=>{
+  S=fresh(); try{localStorage.removeItem(KEY);}catch(e){} ghSel=null;lkey='';invSig='';
+  renderLog(); renderUps(); renderAch(); renderInv(); renderDeco(); renderQuests(); renderSpeed(); renderTools(); setLoc('sill');
+  $('tickerOn').checked=true;$('toast').hidden=false;$('drinkEvery').value=String(S.drink.every);
+  save(); openTab('up'); window.scrollTo(0,0); pickStarter();});
 };
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('[data-tab]').forEach(x=>x.setAttribute('aria-selected',x===b));
@@ -1490,7 +1502,7 @@ function setLoc(l){S.loc=l;document.querySelector('.scene').hidden=l!=='sill';$(
 function ghClick(i){const sl=ghSlots();
   if(i>=0&&i<sl.n){ghSel=S.plants[i].id;renderGreen();}
   else if(i>=sl.n&&i<sl.n+sl.free){openTab('green');$('ghShop').scrollIntoView({behavior:'smooth',block:'start'});}
-  else if(i===sl.total-1){const c=ghExpandCost();if(S.zucker<c){showToast(`Zwei neue Plätze kosten ${fmt(c)} Zucker.`);return;}if(confirm(`Gewächshaus um zwei Plätze erweitern? Kostet ${fmt(c)} Zucker.`))expandGh();}}
+  else if(i===sl.total-1){const c=ghExpandCost();if(S.zucker<c){showToast(`Zwei neue Plätze kosten ${fmt(c)} Zucker.`);return;}ask(`Gewächshaus um zwei Plätze erweitern? Kostet ${fmt(c)} Zucker.`,'Erweitern',expandGh);}}
 function renderGreen(){
   if(!S.plants.length)return;
   if(!ghSel||!S.plants.some(p=>p.id===ghSel))ghSel=(S.plants.find(p=>p.id!==S.active)||S.plants[0]).id;
@@ -1601,8 +1613,12 @@ function closeBubble(){$('bubble').hidden=true;document.title=titleKeep;}
 $('btnDrank').onclick=()=>{const g=Math.round((20+5*S.stage)*(1+0.15*S.seeds));S.zucker+=g;S.drink.last=Date.now();S.drink.count++;
   S.stats.glasses=(S.stats.glasses||0)+1;closeBubble();pop(48,30,'+'+g,'big');log(`Prost! Du hast ein Glas Wasser getrunken. Deine Pflanze ist stolz auf dich. (+${g} Zucker)`);};
 $('btnSnooze').onclick=()=>{S.drink.last=Date.now()-Math.max(0,S.drink.every-5)*60000;closeBubble();};
+function drinkOff(){S.drink.every=0;$('drinkEvery').value='0';closeBubble();
+  if(S.quests&&S.quests.list){const i=S.quests.list.findIndex(q=>q.id==='glasses'&&!q.claimed);if(i>=0){const used=S.quests.list.map(q=>q.id),pool=QUESTS.filter(q=>!used.includes(q.id)&&(!q.c||q.c()));
+    if(pool.length){const q=pool[Math.floor(Math.random()*pool.length)];S.quests.list[i]={id:q.id,goal:q.g[0]+Math.floor(Math.random()*(q.g[1]-q.g[0]+1)),base:S.stats[q.stat]||0,claimed:false};}else S.quests.list.splice(i,1);renderQuests();}}}
+$('btnDrinkOff').onclick=()=>{drinkOff();showToast('Trink-Erinnerung ist aus. Unter „Mehr“ kannst du sie wieder einschalten.');};
 $('drinkEvery').value=String(S.drink.every);
-$('drinkEvery').onchange=e=>{S.drink.every=+e.target.value;S.drink.last=Date.now();closeBubble();checkDrink();};
+$('drinkEvery').onchange=e=>{const v=+e.target.value;if(!v){drinkOff();return;}S.drink.every=v;S.drink.last=Date.now();closeBubble();checkDrink();};
 setInterval(checkDrink,5000);
 
 /* ---------- tapping ---------- */
@@ -1649,6 +1665,8 @@ function save(){S.lastSave=Date.now();try{localStorage.setItem(KEY,JSON.stringif
   if(!S.plants.length)pickStarter(); else if(S.dead)showDeath();
 })();
 renderUps();renderLog();renderAch();renderGreen();checkDrink();renderDeco();renderQuests();
+function setFont(f){S.font=f;document.body.classList.remove('f-vt','f-sys');if(f==='vt')document.body.classList.add('f-vt');if(f==='sys')document.body.classList.add('f-sys');$('fontSel').value=f;}
+setFont(S.font||'vt');$('fontSel').onchange=e=>setFont(e.target.value);
 $('tickerOn').checked=S.ticker!==false;$('toast').hidden=S.ticker===false;
 $('tickerOn').onchange=e=>{S.ticker=e.target.checked;$('toast').hidden=!S.ticker;};
 $('giftBtn').onclick=redeem;
