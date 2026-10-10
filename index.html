@@ -88,6 +88,17 @@ canvas{display:block;width:100%;height:auto;image-rendering:pixelated;image-rend
 .wide{width:100%;margin:4px 0 10px;min-height:42px;font-size:14px}
 .invbtn{display:flex;flex-direction:column;gap:6px;grid-row:span 2}.invbtn button{min-height:36px;padding:4px 8px;font-size:13px;box-shadow:none}
 .invn{color:var(--accent);font-weight:700}
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--panel);border-top:3px solid var(--line);display:grid;grid-template-columns:repeat(6,1fr);gap:2px;padding:4px 4px calc(4px + env(safe-area-inset-bottom,0px))}
+.nav button{border:0;box-shadow:none;background:transparent;min-height:54px;padding:4px 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:11px;color:var(--muted);overflow:hidden}
+.nav button[aria-current="page"]{color:var(--ink);background:var(--bg);outline:2px solid var(--line)}
+.nav svg{width:22px;height:22px}
+.nav button:active:not(:disabled){transform:none;box-shadow:none}
+.app{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
+.topsugar{font-size:15px;color:var(--muted)}.topsugar b{color:var(--accent)}
+header{display:flex;align-items:center}header .meta{width:100%}
+.scrh{font-size:24px;margin:4px 0 10px}
+.seg{display:flex;gap:6px;margin-bottom:-3px}.seg button{flex:1;min-height:40px;padding:4px;font-size:14px;box-shadow:none}.seg button[aria-selected="true"]{background:var(--grow);color:#fff}
+#scr-sill .toolbar{margin-bottom:6px}
 .drinkset{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:15px;margin-bottom:6px}
 select{font:inherit;color:var(--ink);background:var(--btn);border:3px solid var(--line);padding:6px}
 .toast{margin-top:12px;min-height:3.4em;display:flex;align-items:center;background:var(--panel);color:var(--muted);border:3px solid var(--line);border-left-width:8px;padding:6px 10px;font-size:14px;line-height:1.3;transition:color .4s,border-color .4s}
@@ -109,6 +120,7 @@ button:active:not(:disabled){transform:translate(2px,2px);box-shadow:1px 1px 0 v
 button:disabled{background:var(--btnoff);color:var(--muted);cursor:default}
 button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 #btnSeed{grid-column:1/-1;background:var(--accent);color:#1F2B1F;font-weight:700}
+#btnWater{grid-column:1/-1;background:var(--water);color:#fff;font-weight:700}
 .tabs{display:flex;flex-wrap:wrap;gap:6px;margin-top:20px}
 .tabs button{flex:1 1 28%;min-height:40px;padding:6px;box-shadow:none;font-size:15px}
 .tabs button[aria-selected="true"]{background:var(--grow);color:#fff}
@@ -150,10 +162,11 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 <main class="app">
   <header>
     <h1>Just Grow</h1>
+    <div class="topsugar">Zucker <b id="sugarTop">0</b></div>
     <div class="meta" id="meta"></div>
   </header>
-
-  <div class="loc"><button data-loc="sill" aria-pressed="true">Fensterbank</button><button data-loc="gh" aria-pressed="false">Gewächshaus</button></div>
+<div class="bubble" id="bubble" hidden><p id="bubbleText"></p><div class="bbtn"><button id="btnDrank">Hab getrunken!</button><button id="btnSnooze">Gleich</button><button id="btnDrinkOff">Ausschalten</button></div></div>
+  <div class="screen" id="scr-sill">
   <div class="scene">
     <canvas id="scene" width="192" height="208" aria-label="Deine Pflanze auf Hildes Fensterbank"></canvas>
     <div class="egg" id="egg" hidden aria-label="Du bist großartig, Henni">
@@ -162,10 +175,7 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
     </div>
     <div class="fx" id="fx"></div>
   </div>
-  <section id="ghView" hidden><div class="ghwrap"><canvas id="ghCanvas" width="188" height="120" aria-label="Dein Gewächshaus"></canvas></div><p class="note">Wisch zur Seite, um durchs Gewächshaus zu laufen. Tipp eine Pflanze an, um sie auszuwählen.</p><div id="ghDetail"></div></section>
   <div class="toast" id="toast" aria-live="polite">Tipp deine Pflanze an. Und alles, was sich sonst so bewegt: Katze, Sonnenfunken, Düngestäbchen, Regenwürmer, Sternschnuppen.</div>
-<div class="bubble" id="bubble" hidden><p id="bubbleText"></p><div class="bbtn"><button id="btnDrank">Hab getrunken!</button><button id="btnSnooze">Gleich</button><button id="btnDrinkOff">Ausschalten</button></div></div>
-
   <section class="panel" aria-label="Zustand">
     <div class="who"><b id="stageName"></b><small id="genLbl"></small></div>
     <div class="row"><span>Wasser</span><div class="bar"><div class="band" id="waterBand"></div><div class="fill" id="waterFill" style="background:var(--water)"></div></div></div>
@@ -175,38 +185,44 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
     <div class="sugar">Zucker: <b id="sugar">0</b> <small id="rate" style="color:var(--muted)"></small></div>
     <div class="speed"><span>Tempo:</span><div id="speedBtns"></div></div>
   </section>
-  <section class="panel" aria-label="Hildes Wünsche"><h3 class="sub">Hildes Wünsche für heute</h3><div id="wishList"></div><p class="note" id="catLine" style="margin:10px 0 0"></p></section>
-
   <section class="actions">
+    <button id="btnWater">Gießen</button>
     <button id="btnStretch">Zur Sonne strecken</button>
     <button id="btnRustle">Blätter rascheln</button>
     <button id="btnSeed" hidden>Samen ernten</button>
   </section>
   <section class="toolbar" id="toolbar" hidden><div id="toolBtns"></div></section>
-
-  <div class="tabs" role="tablist">
-    <button role="tab" aria-selected="true" data-tab="up">Stärken</button>
-    <button role="tab" aria-selected="false" data-tab="green">Gärtnerei</button>
-    <button role="tab" aria-selected="false" data-tab="inv">Inventar</button>
-    <button role="tab" aria-selected="false" data-tab="deco">Deko</button>
-    <button role="tab" aria-selected="false" data-tab="log">Tagebuch</button>
-    <button role="tab" aria-selected="false" data-tab="ach">Mehr</button>
+  <section class="panel" aria-label="Hildes Wünsche"><h3 class="sub">Hildes Wünsche für heute</h3><div id="wishList"></div><p class="note" id="catLine" style="margin:10px 0 0"></p></section>
   </div>
+  <div class="screen" id="scr-gh" hidden>
+  <section id="ghView"><div class="ghwrap"><canvas id="ghCanvas" width="188" height="120" aria-label="Dein Gewächshaus"></canvas></div><p class="note">Wisch zur Seite, um durchs Gewächshaus zu laufen. Tipp eine Pflanze an, um sie auszuwählen.</p><div id="ghDetail"></div></section>
+  </div>
+  <div class="screen" id="scr-up" hidden><h2 class="scrh">Stärken</h2>
   <section class="panel tabpanel" id="tab-up" role="tabpanel"></section>
-  <section class="panel tabpanel" id="tab-green" role="tabpanel" hidden>
+  </div>
+  <div class="screen" id="scr-shop" hidden><h2 class="scrh">Laden</h2>
+    <div class="seg"><button data-tab="green" aria-selected="true">Pflanzen</button><button data-tab="deco" aria-selected="false">Werkzeuge &amp; Deko</button></div>
+  <section class="panel tabpanel" id="tab-green" role="tabpanel">
     <h3 class="sub">Gärtnerei</h3><p class="note">Jede Pflanze kannst du mehrfach kaufen. Mit etwas Glück bekommst du eine seltene Farbe (9 %) oder sogar eine legendäre goldene Pflanze (1 %). Jedes weitere Exemplar derselben Art wird teurer.</p><button id="ghExpand" class="wide"></button>
     <div id="ghShop"></div>
     <h3 class="sub">Ableger einlösen</h3><p class="note">Hat dir jemand einen Code geschenkt? Hier eintragen.</p>
     <div class="redeem"><input id="giftIn" placeholder="JG-…" autocomplete="off" autocapitalize="characters"><button id="giftBtn">Einlösen</button></div><p class="note" id="giftMsg"></p>
   </section>
-  <section class="panel tabpanel" id="tab-inv" role="tabpanel" hidden></section>
   <section class="panel tabpanel" id="tab-deco" role="tabpanel" hidden></section>
-  <section class="panel tabpanel" id="tab-log" role="tabpanel" hidden><ul class="log" id="log"></ul></section>
-  <section class="panel tabpanel" id="tab-ach" role="tabpanel" hidden>
+  </div>
+  <div class="screen" id="scr-inv" hidden><h2 class="scrh">Inventar</h2>
+  <section class="panel tabpanel" id="tab-inv" role="tabpanel"></section>
+  </div>
+  <div class="screen" id="scr-more" hidden><h2 class="scrh">Mehr</h2>
+    <div class="seg"><button data-tab="ach" aria-selected="true">Einstellungen &amp; Erfolge</button><button data-tab="log" aria-selected="false">Tagebuch</button></div>
+  <section class="panel tabpanel" id="tab-ach" role="tabpanel">
     <h3 class="sub">Einstellungen</h3>
     <h3 class="sub">Schrift</h3>
     <div class="drinkset"><label for="fontSel">Schriftart</label><select id="fontSel"><option value="vt">Klar (Retro)</option><option value="pixel">Pixel (Original)</option><option value="sys">Normal</option></select></div>
     <p class="note">Falls dir einzelne Buchstaben schwer lesbar vorkommen, probier eine andere Schrift aus.</p>
+    <h3 class="sub">Gießen</h3>
+    <div class="drinkset"><label for="waterMode">Wer gießt?</label><select id="waterMode"><option value="self">Ich selbst</option><option value="hilde">Hilde hilft mit</option></select></div>
+    <p class="note">Bei „Ich selbst“ gießt Hilde nur, während du nicht im Spiel bist, damit deine Pflanze nicht vertrocknet.</p>
     <h3 class="sub">Meldungen</h3>
     <div class="drinkset"><label><input type="checkbox" id="tickerOn" checked> Meldungen unter dem Bild anzeigen</label></div>
     <p class="note">Alles steht trotzdem immer im Tagebuch.</p>
@@ -218,7 +234,14 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
     <p class="note">Startet ein Hintergrund-Ereignis sofort, damit du nicht auf den Sommer oder Silvester warten musst.</p>
     <div class="testsky"><button data-bg="balloon">Heißluftballon</button><button data-bg="birds">Vogelschwarm</button><button data-bg="kite">Drachen</button><button data-bg="plane">Flugzeug</button><button data-bg="star">Sternschnuppe</button><button data-bg="sleigh">Schlitten</button><button data-bg="bats">Fledermäuse</button><button data-bg="hearts">Herzchen</button><button data-bg="fireworks">Feuerwerk</button></div>
     <button class="reset" id="btnReset">Spielstand löschen</button></section>
+  <section class="panel tabpanel" id="tab-log" role="tabpanel" hidden><ul class="log" id="log"></ul></section>
+  </div>
+
+
+
+
 </main>
+<nav class="nav" aria-label="Bereiche"><button data-nav="sill"><svg viewBox="0 0 12 12" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="M1 1h10v10H1zM2 2v3h3V2zm5 0v3h3V2zM2 7v3h3V7zm5 0v3h3V7z" fill-rule="evenodd"/></svg><span>Fenster</span></button><button data-nav="gh"><svg viewBox="0 0 12 12" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="M5 0h2v1h1v1h1v1h1v1h1v1h1v7H0V5h1V4h1V3h1V2h1V1h1zM2 6v4h2V6zm3 0v4h2V6zm3 0v4h2V6z" fill-rule="evenodd"/></svg><span>Glashaus</span></button><button data-nav="up"><svg viewBox="0 0 12 12" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="M5 1h2v1h1v1h1v1h1v2H7v5H5V6H2V4h1V3h1V2h1z"/></svg><span>Stärken</span></button><button data-nav="shop"><svg viewBox="0 0 12 12" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="M4 1h4v1h1v2h2v7H1V4h2V2h1zm1 1v2h2V2z" fill-rule="evenodd"/></svg><span>Laden</span></button><button data-nav="inv"><svg viewBox="0 0 12 12" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="M1 3h10v8H1zm0-2h10v1H1zM5 5h2v2H5z" fill-rule="evenodd"/></svg><span>Inventar</span></button><button data-nav="more"><svg viewBox="0 0 12 12" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="M1 5h2v2H1zm4 0h2v2H5zm4 0h2v2H9z"/></svg><span>Mehr</span></button></nav>
 <div class="overlay" id="overlay"><div class="dialog" id="dialog"></div></div>
 
 <script>
@@ -473,7 +496,8 @@ function tick(dt,live){
     if(anim.worm&&now>anim.worm.until)anim.worm=null;
     if(!anim.worm&&S.stage>=1&&Math.random()<dt/70)anim.worm={x:38+Math.round(Math.random()*20),until:now+7000};
   }
-  if(S.t>=S.vacationUntil&&S.water<lo+10&&Math.random()<dt*0.05*(1+0.25*(S.up.charm+(hasDeco('photo')?1:0)))*(sp.hilde||1))hildeWater(live);
+  if((!live||S.waterMode==='hilde')&&S.t>=S.vacationUntil&&S.water<lo+10&&Math.random()<dt*0.05*(1+0.25*(S.up.charm+(hasDeco('photo')?1:0)))*(sp.hilde||1))hildeWater(live);
+  if(live){if(S.water<lo&&!S.thirsty){S.thirsty=1;showToast(`${act()&&act().name?act().name:'Deine Pflanze'}: Ich hab Durst! Tipp auf „Gießen“.`);}else if(S.water>=lo)S.thirsty=0;}
   const st=stageOf();
   if(st>S.stage){S.stage=st;S.stats.bestStage=Math.max(S.stats.bestStage,st);
     if(st===5&&S.species==='snake')S.stats.snakeBloom=true;
@@ -540,6 +564,14 @@ function pickStarter(){
 }
 
 /* ---------- actions ---------- */
+let waterCd=0;
+document.getElementById('btnWater').onclick=()=>{
+  if(S.dead||!S.plants.length||performance.now()<waterCd)return;waterCd=performance.now()+1200;
+  const[lo,hi]=rng();
+  if(hasTool('can')){S.water=Math.max(S.water,Math.round((lo+hi)/2));pop(30,50,'Perfekt!');}
+  else{S.water=Math.min(130,S.water+30);pop(30,50,'Gluck!');}
+  anim.water=performance.now()+1600;S.stats.selfwater=(S.stats.selfwater||0)+1;
+  if(S.water>hi)showToast('Ups, das war etwas viel. Deine Wurzeln schwimmen.');updateUI();};
 document.getElementById('btnStretch').onclick=()=>{
   if(S.t<S.stretchCd||S.dead)return; S.stretchCd=S.t+25;
   if(!isDay()){log('Es ist Nacht. Du streckst dich ins Leere. Niemand sieht es.');return;}
@@ -548,7 +580,7 @@ document.getElementById('btnStretch').onclick=()=>{
 document.getElementById('btnRustle').onclick=()=>{
   if(S.t<S.rustleCd||S.dead)return; S.rustleCd=S.t+30;
   if(S.t<S.vacationUntil){log('Du raschelst. Niemand ist da. Nur Mozzarella, und die ist es egal.');return;}
-  if(S.water<rng()[1]-25){hildeWater(true);return;}
+  if(S.waterMode==='hilde'&&S.water<rng()[1]-25){hildeWater(true);return;}
   S.zucker+=2+S.up.charm; log('Hilde schaut rüber: „Ja, du bist auch hübsch.“ Gießen findet sie aber gerade unnötig.');
 };
 document.getElementById('btnSeed').onclick=()=>{if(S.stage>=5)harvest(S.active);};
@@ -557,12 +589,9 @@ document.getElementById('btnReset').onclick=()=>{
   S=fresh(); try{localStorage.removeItem(KEY);}catch(e){} ghSel=null;lkey='';invSig='';
   renderLog(); renderUps(); renderAch(); renderInv(); renderDeco(); renderQuests(); renderSpeed(); renderTools(); setLoc('sill');
   $('tickerOn').checked=true;$('toast').hidden=false;$('drinkEvery').value=String(S.drink.every);
-  save(); openTab('up'); window.scrollTo(0,0); pickStarter();});
+  save(); window.scrollTo(0,0); pickStarter();});
 };
-document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{
-  document.querySelectorAll('[data-tab]').forEach(x=>x.setAttribute('aria-selected',x===b));
-  ['up','green','inv','deco','log','ach'].forEach(t=>document.getElementById('tab-'+t).hidden=t!==b.dataset.tab);
-  drawThumbs();
+document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{openTab(b.dataset.tab);
 });
 
 function showDeath(){
@@ -614,7 +643,7 @@ function updateUI(){
   $('healthFill').style.width=Math.max(0,S.health)+'%';
   if(S.stage<5){const a=thr(S.stage),b=thr(S.stage+1);$('growFill').style.width=((S.growth-a)/(b-a)*100)+'%';$('growLbl').textContent='Wachstum';}
   else{$('growFill').style.width='100%';$('growLbl').textContent='Blühend';}
-  $('sugar').textContent=fmt(S.zucker);
+  $('sugar').textContent=fmt(S.zucker);$('sugarTop').textContent=fmt(S.zucker);
   const ok=S.water>=lo&&S.water<=hi;
   $('rate').textContent=[S.water>hi?'zu nass':S.water<lo?'zu trocken':'',S.dry?`${S.dry} vertrocknete${S.dry>1?' Blätter':'s Blatt'}`:'',S.aphids?`${S.aphids} Blattläuse`:'',!lightNow()?'gerade kein Licht':''].filter(Boolean).join(', ');
   updateTools();
@@ -1276,7 +1305,7 @@ function drawDecor(now,dk){
 
 /* ---------- tools & inventory ---------- */
 const TOOLS=[
-  {id:'can',n:'Gießkanne',cost:400,cd:15,d:'Gieß dich selbst, wann immer du willst. Aber Vorsicht vor nassen Füßen.'},
+  {id:'can',n:'Messing-Gießkanne',cost:400,cd:15,d:'Mit ihr gießt du immer genau richtig: nie zu wenig, nie zu viel.'},
   {id:'scissors',n:'Gartenschere',cost:800,cd:5,d:'Schneidet vertrocknete Blätter ab, die bei Durst oder schlechter Gesundheit entstehen.'},
   {id:'mist',n:'Sprühflasche',cost:1200,cd:60,d:'Ein feiner Nebel: +Gesundheit, weg mit dem Staub. Tropenpflanzen lieben das.'},
   {id:'loupe',n:'Lupe',cost:3000,cd:0,d:'Zeigt dir genau, wie es deiner Pflanze geht und wann die nächste Stufe kommt.'}
@@ -1292,7 +1321,7 @@ const TROPIC=['orchid','mushroom','monstera','peacelily','pitcher','pothos'];
 const hasTool=id=>S.tools.includes(id);
 let lastProd=0,lastSugar=0;
 function renderTools(){
-  const own=TOOLS.filter(t=>hasTool(t.id)),items=ITEMS.filter(i=>S.inv[i.id]>0);$('toolbar').hidden=!own.length&&!items.length;
+  const own=TOOLS.filter(t=>hasTool(t.id)&&t.id!=='can'),items=ITEMS.filter(i=>S.inv[i.id]>0);$('toolbar').hidden=!own.length&&!items.length;
   $('toolBtns').innerHTML=own.map(t=>`<button data-tool="${t.id}"></button>`).join('')+items.map(i=>`<button data-use="${i.id}"></button>`).join('');
   document.querySelectorAll('[data-tool]').forEach(b=>b.onclick=()=>useTool(b.dataset.tool));
   document.querySelectorAll('[data-use]').forEach(b=>b.onclick=()=>useItem(b.dataset.use));updateTools();
@@ -1444,7 +1473,7 @@ const QUESTS=[
   {id:'wishes',stat:'wishes',g:[1,2],t:g=>`Fang ${g} Sternschnuppe${g>1?'n':''}`},
   {id:'harv',stat:'harvests',g:[1,1],t:()=>'Ernte einmal Samen'},
   {id:'lice',stat:'lice',g:[5,10],t:g=>`Entferne ${g} Blattläuse`},
-  {id:'selfw',stat:'selfwater',g:[3,6],t:g=>`Gieß dich ${g}-mal selbst`,c:()=>hasTool('can')},
+  {id:'selfw',stat:'selfwater',g:[3,6],t:g=>`Gieß dich ${g}-mal selbst`},
   {id:'snip',stat:'snips',g:[2,4],t:g=>`Schneide ${g} vertrocknete Blätter ab`,c:()=>hasTool('scissors')}
 ];
 function newQuests(){
@@ -1497,8 +1526,11 @@ function redeem(){
 let ghSel=null;
 const GH_SLOT=44,GH_PAD=12,GH_H=320;
 function ghSlots(){const free=Math.max(0,ghFree());return{n:S.plants.length,free,total:S.plants.length+free+1};}
-function setLoc(l){S.loc=l;document.querySelector('.scene').hidden=l!=='sill';$('ghView').hidden=l!=='gh';
-  document.querySelectorAll('[data-loc]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.loc===l));if(l==='gh')renderGreen();}
+const SCREENS=['sill','gh','up','shop','inv','more'],TAB_SCR={up:'up',green:'shop',deco:'shop',inv:'inv',log:'more',ach:'more'};
+function showScreen(n){if(!SCREENS.includes(n))n='sill';S.scr=n;SCREENS.forEach(k=>$('scr-'+k).hidden=k!==n);
+  document.querySelectorAll('[data-nav]').forEach(b=>b.setAttribute('aria-current',b.dataset.nav===n?'page':'false'));
+  if(n==='gh')renderGreen();window.scrollTo(0,0);}
+function setLoc(l){showScreen(l==='gh'?'gh':'sill');}
 function ghClick(i){const sl=ghSlots();
   if(i>=0&&i<sl.n){ghSel=S.plants[i].id;renderGreen();}
   else if(i>=sl.n&&i<sl.n+sl.free){openTab('green');$('ghShop').scrollIntoView({behavior:'smooth',block:'start'});}
@@ -1533,7 +1565,7 @@ function updateGreen(){
   const e=$('ghExpand');if(e){const c=ghExpandCost();e.disabled=S.zucker<c;e.textContent=`Gewächshaus erweitern: +2 Plätze für ${fmt(c)} Zucker`;}
 }
 function drawGreenhouse(){
-  const el=$('ghCanvas');if(!el||$('ghView').hidden)return;
+  const el=$('ghCanvas');if(!el||$('scr-gh').hidden)return;
   const main=cx,keep={species:S.species,growth:S.growth,stage:S.stage,health:S.health,water:S.water},now=performance.now(),W2=el.width,H2=el.height,d=dayPos(),dk=darkness(d);
   cx=el.getContext('2d');cx.setTransform(1,0,0,1,0,0);
   try{
@@ -1667,11 +1699,13 @@ function save(){S.lastSave=Date.now();try{localStorage.setItem(KEY,JSON.stringif
 renderUps();renderLog();renderAch();renderGreen();checkDrink();renderDeco();renderQuests();
 function setFont(f){S.font=f;document.body.classList.remove('f-vt','f-sys');if(f==='vt')document.body.classList.add('f-vt');if(f==='sys')document.body.classList.add('f-sys');$('fontSel').value=f;}
 setFont(S.font||'vt');$('fontSel').onchange=e=>setFont(e.target.value);
+$('waterMode').value=S.waterMode==='hilde'?'hilde':'self';$('waterMode').onchange=e=>{S.waterMode=e.target.value;showToast(S.waterMode==='hilde'?'Hilde gießt jetzt wieder mit.':'Ab jetzt gießt du selbst. Hilde springt nur ein, wenn du weg bist.');};
 $('tickerOn').checked=S.ticker!==false;$('toast').hidden=S.ticker===false;
 $('tickerOn').onchange=e=>{S.ticker=e.target.checked;$('toast').hidden=!S.ticker;};
 $('giftBtn').onclick=redeem;
-function openTab(t){document.querySelectorAll('[data-tab]').forEach(x=>x.setAttribute('aria-selected',x.dataset.tab===t));['up','green','inv','deco','log','ach'].forEach(q=>document.getElementById('tab-'+q).hidden=q!==t);}
-document.querySelectorAll('[data-loc]').forEach(b=>b.onclick=()=>setLoc(b.dataset.loc));setLoc(S.loc==='gh'?'gh':'sill');
+function openTab(t){const sc=TAB_SCR[t];Object.keys(TAB_SCR).forEach(q=>{if(TAB_SCR[q]===sc)document.getElementById('tab-'+q).hidden=q!==t;});
+  document.querySelectorAll('#scr-'+sc+' [data-tab]').forEach(x=>x.setAttribute('aria-selected',x.dataset.tab===t));showScreen(sc);}
+document.querySelectorAll('[data-nav]').forEach(b=>b.onclick=()=>showScreen(b.dataset.nav));showScreen(S.scr||'sill');
 (()=>{let sx=0,sy=0;const g=$('ghCanvas');
   g.addEventListener('pointerdown',e=>{sx=e.clientX;sy=e.clientY;});
   g.addEventListener('pointerup',e=>{if(Math.hypot(e.clientX-sx,e.clientY-sy)>8)return;const r=g.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*g.width,i=Math.floor((x-GH_PAD)/GH_SLOT);
